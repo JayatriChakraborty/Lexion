@@ -62,7 +62,7 @@ function NavItem({
   label: string;
   icon: typeof Home;
   active: boolean;
-  onClick?: () => void;
+  onClick?: (() => void) | undefined;
 }) {
   return (
     <Link
