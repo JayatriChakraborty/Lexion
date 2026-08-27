@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnalyseRouteImport } from './routes/analyse'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as MistakesRouteImport } from './routes/mistakes'
 import { Route as StudyRouteImport } from './routes/study'
 import { Route as HistoryIndexRouteImport } from './routes/history.index'
 import { Route as HistoryIdRouteImport } from './routes/history.$id'
@@ -29,6 +30,11 @@ const AnalyseRoute = AnalyseRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MistakesRoute = MistakesRouteImport.update({
+  id: '/mistakes',
+  path: '/mistakes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StudyRoute = StudyRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analyse': typeof AnalyseRoute
   '/dashboard': typeof DashboardRoute
+  '/mistakes': typeof MistakesRoute
   '/study': typeof StudyRoute
   '/history/$id': typeof HistoryIdRoute
   '/history/': typeof HistoryIndexRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analyse': typeof AnalyseRoute
   '/dashboard': typeof DashboardRoute
+  '/mistakes': typeof MistakesRoute
   '/study': typeof StudyRoute
   '/history/$id': typeof HistoryIdRoute
   '/history': typeof HistoryIndexRoute
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/analyse': typeof AnalyseRoute
   '/dashboard': typeof DashboardRoute
+  '/mistakes': typeof MistakesRoute
   '/study': typeof StudyRoute
   '/history/$id': typeof HistoryIdRoute
   '/history/': typeof HistoryIndexRoute
@@ -75,14 +84,28 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/analyse' | '/dashboard' | '/study' | '/history/$id' | '/history/'
+    | '/'
+    | '/analyse'
+    | '/dashboard'
+    | '/mistakes'
+    | '/study'
+    | '/history/$id'
+    | '/history/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/analyse' | '/dashboard' | '/study' | '/history/$id' | '/history'
+  to:
+    | '/'
+    | '/analyse'
+    | '/dashboard'
+    | '/mistakes'
+    | '/study'
+    | '/history/$id'
+    | '/history'
   id:
     | '__root__'
     | '/'
     | '/analyse'
     | '/dashboard'
+    | '/mistakes'
     | '/study'
     | '/history/$id'
     | '/history/'
@@ -92,6 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyseRoute: typeof AnalyseRoute
   DashboardRoute: typeof DashboardRoute
+  MistakesRoute: typeof MistakesRoute
   StudyRoute: typeof StudyRoute
   HistoryIdRoute: typeof HistoryIdRoute
   HistoryIndexRoute: typeof HistoryIndexRoute
@@ -118,6 +142,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mistakes': {
+      id: '/mistakes'
+      path: '/mistakes'
+      fullPath: '/mistakes'
+      preLoaderRoute: typeof MistakesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/study': {
@@ -148,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyseRoute: AnalyseRoute,
   DashboardRoute: DashboardRoute,
+  MistakesRoute: MistakesRoute,
   StudyRoute: StudyRoute,
   HistoryIdRoute: HistoryIdRoute,
   HistoryIndexRoute: HistoryIndexRoute,
