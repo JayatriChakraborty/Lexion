@@ -12,7 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnalyseRouteImport } from './routes/analyse'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as LanguagesRouteImport } from './routes/languages'
 import { Route as MistakesRouteImport } from './routes/mistakes'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as StudyRouteImport } from './routes/study'
 import { Route as HistoryIndexRouteImport } from './routes/history.index'
 import { Route as HistoryIdRouteImport } from './routes/history.$id'
@@ -32,9 +35,24 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LanguagesRoute = LanguagesRouteImport.update({
+  id: '/languages',
+  path: '/languages',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MistakesRoute = MistakesRouteImport.update({
   id: '/mistakes',
   path: '/mistakes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProgressRoute = ProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StudyRoute = StudyRouteImport.update({
@@ -57,7 +75,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analyse': typeof AnalyseRoute
   '/dashboard': typeof DashboardRoute
+  '/languages': typeof LanguagesRoute
   '/mistakes': typeof MistakesRoute
+  '/profile': typeof ProfileRoute
+  '/progress': typeof ProgressRoute
   '/study': typeof StudyRoute
   '/history/$id': typeof HistoryIdRoute
   '/history/': typeof HistoryIndexRoute
@@ -66,7 +87,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analyse': typeof AnalyseRoute
   '/dashboard': typeof DashboardRoute
+  '/languages': typeof LanguagesRoute
   '/mistakes': typeof MistakesRoute
+  '/profile': typeof ProfileRoute
+  '/progress': typeof ProgressRoute
   '/study': typeof StudyRoute
   '/history/$id': typeof HistoryIdRoute
   '/history': typeof HistoryIndexRoute
@@ -76,7 +100,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/analyse': typeof AnalyseRoute
   '/dashboard': typeof DashboardRoute
+  '/languages': typeof LanguagesRoute
   '/mistakes': typeof MistakesRoute
+  '/profile': typeof ProfileRoute
+  '/progress': typeof ProgressRoute
   '/study': typeof StudyRoute
   '/history/$id': typeof HistoryIdRoute
   '/history/': typeof HistoryIndexRoute
@@ -87,7 +114,10 @@ export interface FileRouteTypes {
     | '/'
     | '/analyse'
     | '/dashboard'
+    | '/languages'
     | '/mistakes'
+    | '/profile'
+    | '/progress'
     | '/study'
     | '/history/$id'
     | '/history/'
@@ -96,7 +126,10 @@ export interface FileRouteTypes {
     | '/'
     | '/analyse'
     | '/dashboard'
+    | '/languages'
     | '/mistakes'
+    | '/profile'
+    | '/progress'
     | '/study'
     | '/history/$id'
     | '/history'
@@ -105,7 +138,10 @@ export interface FileRouteTypes {
     | '/'
     | '/analyse'
     | '/dashboard'
+    | '/languages'
     | '/mistakes'
+    | '/profile'
+    | '/progress'
     | '/study'
     | '/history/$id'
     | '/history/'
@@ -115,7 +151,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyseRoute: typeof AnalyseRoute
   DashboardRoute: typeof DashboardRoute
+  LanguagesRoute: typeof LanguagesRoute
   MistakesRoute: typeof MistakesRoute
+  ProfileRoute: typeof ProfileRoute
+  ProgressRoute: typeof ProgressRoute
   StudyRoute: typeof StudyRoute
   HistoryIdRoute: typeof HistoryIdRoute
   HistoryIndexRoute: typeof HistoryIndexRoute
@@ -144,11 +183,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/languages': {
+      id: '/languages'
+      path: '/languages'
+      fullPath: '/languages'
+      preLoaderRoute: typeof LanguagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mistakes': {
       id: '/mistakes'
       path: '/mistakes'
       fullPath: '/mistakes'
       preLoaderRoute: typeof MistakesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/progress': {
+      id: '/progress'
+      path: '/progress'
+      fullPath: '/progress'
+      preLoaderRoute: typeof ProgressRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/study': {
@@ -179,7 +239,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyseRoute: AnalyseRoute,
   DashboardRoute: DashboardRoute,
+  LanguagesRoute: LanguagesRoute,
   MistakesRoute: MistakesRoute,
+  ProfileRoute: ProfileRoute,
+  ProgressRoute: ProgressRoute,
   StudyRoute: StudyRoute,
   HistoryIdRoute: HistoryIdRoute,
   HistoryIndexRoute: HistoryIndexRoute,
