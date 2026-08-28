@@ -34,7 +34,7 @@ export const Route = createFileRoute("/progress")({
       },
     ],
   }),
-  component: ProgressPage;
+  component: ProgressPage,
 });
 
 const ranges = ["7", "30", "90"] as const;
