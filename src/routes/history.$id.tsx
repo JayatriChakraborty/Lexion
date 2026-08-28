@@ -12,9 +12,9 @@ export const Route = createFileRoute("/history/$id")({
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
-      return { meta: [{ title: "Unavailable · Lixeon" }, { name: "robots", content: "noindex" }] };
+      return { meta: [{ title: "Unavailable · Lexion" }, { name: "robots", content: "noindex" }] };
     }
-    const t = `${loaderData.submission.title} · Lixeon analysis`;
+    const t = `${loaderData.submission.title} · Lexion analysis`;
     return {
       meta: [
         { title: t },

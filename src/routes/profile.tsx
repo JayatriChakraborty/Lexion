@@ -8,16 +8,16 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/profile")({
   head: () => ({
     meta: [
-      { title: "Profile & settings · Lixeon" },
+      { title: "Profile & settings · Lexion" },
       {
         name: "description",
         content:
           "Your account, native language, learning languages, goals, preferred explanation depth and correction style.",
       },
-      { property: "og:title", content: "Profile & settings · Lixeon" },
+      { property: "og:title", content: "Profile & settings · Lexion" },
       {
         property: "og:description",
-        content: "Tune how Lixeon explains things to you and which languages it follows.",
+        content: "Tune how Lexion explains things to you and which languages it follows.",
       },
     ],
   }),

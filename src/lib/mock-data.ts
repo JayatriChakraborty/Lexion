@@ -1,4 +1,4 @@
-export const APP_NAME = "Lixeon";
+export const APP_NAME = "Lexion";
 
 export type SubmissionType = "Text" | "Image" | "Audio" | "Transcript" | "Translation";
 export type AnalysisStatus = "Analysed" | "Analysing" | "Not analysed";
