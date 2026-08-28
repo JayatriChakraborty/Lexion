@@ -7,13 +7,13 @@ import { submissions, studyNotes, noticed, mistakes, languageProfiles, APP_NAME 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Home · Lixeon language workspace" },
+      { title: "Home · Lexion language workspace" },
       {
         name: "description",
         content:
-          "Your personal language workspace: recent submissions, your level, personalised study notes and what Lixeon has noticed in your writing and speech.",
+          "Your personal language workspace: recent submissions, your level, personalised study notes and what Lexion has noticed in your writing and speech.",
       },
-      { property: "og:title", content: "Home · Lixeon language workspace" },
+      { property: "og:title", content: "Home · Lexion language workspace" },
       {
         property: "og:description",
         content: "Understand your language. Improve through your own work.",

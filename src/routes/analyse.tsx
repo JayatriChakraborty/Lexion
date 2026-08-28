@@ -10,13 +10,13 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/analyse")({
   head: () => ({
     meta: [
-      { title: "Analyse · Submit your language to Lixeon" },
+      { title: "Analyse · Submit your language to Lexion" },
       {
         name: "description",
         content:
           "Submit text, images or audio in the language you're learning and get a clear explanation of grammar, vocabulary, naturalness and register.",
       },
-      { property: "og:title", content: "Analyse · Submit your language to Lixeon" },
+      { property: "og:title", content: "Analyse · Submit your language to Lexion" },
       {
         property: "og:description",
         content: "Submit text, images or audio and understand exactly what you did well and what to improve.",
@@ -42,7 +42,7 @@ function Analyse() {
     <AppShell>
       <PageHeader
         title="Analyse"
-        subtitle="Submit something you have written, said, read or heard. Lixeon will explain what happened, why, and what to keep."
+        subtitle="Submit something you have written, said, read or heard. Lexion will explain what happened, why, and what to keep."
       />
 
       <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">

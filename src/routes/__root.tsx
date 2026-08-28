@@ -78,13 +78,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lixeon · Understand your language" },
+      { title: "Lexion · Understand your language" },
       {
         name: "description",
         content:
-          "Lixeon analyses the language you actually produce and turns your recurring mistakes into personalised study material.",
+          "Lexion analyses the language you actually produce and turns your recurring mistakes into personalised study material.",
       },
-      { property: "og:title", content: "Lixeon · Understand your language" },
+      { property: "og:title", content: "Lexion · Understand your language" },
       {
         property: "og:description",
         content: "Understand your language. Improve through your own work.",
