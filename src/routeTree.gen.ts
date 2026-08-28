@@ -14,6 +14,7 @@ import { Route as AnalyseRouteImport } from './routes/analyse'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LanguagesRouteImport } from './routes/languages'
 import { Route as MistakesRouteImport } from './routes/mistakes'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as StudyRouteImport } from './routes/study'
 import { Route as HistoryIndexRouteImport } from './routes/history.index'
@@ -44,6 +45,11 @@ const MistakesRoute = MistakesRouteImport.update({
   path: '/mistakes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProgressRoute = ProgressRouteImport.update({
   id: '/progress',
   path: '/progress',
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/languages': typeof LanguagesRoute
   '/mistakes': typeof MistakesRoute
+  '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/study': typeof StudyRoute
   '/history/$id': typeof HistoryIdRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/languages': typeof LanguagesRoute
   '/mistakes': typeof MistakesRoute
+  '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/study': typeof StudyRoute
   '/history/$id': typeof HistoryIdRoute
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/languages': typeof LanguagesRoute
   '/mistakes': typeof MistakesRoute
+  '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/study': typeof StudyRoute
   '/history/$id': typeof HistoryIdRoute
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/languages'
     | '/mistakes'
+    | '/profile'
     | '/progress'
     | '/study'
     | '/history/$id'
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/languages'
     | '/mistakes'
+    | '/profile'
     | '/progress'
     | '/study'
     | '/history/$id'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/languages'
     | '/mistakes'
+    | '/profile'
     | '/progress'
     | '/study'
     | '/history/$id'
@@ -141,6 +153,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   LanguagesRoute: typeof LanguagesRoute
   MistakesRoute: typeof MistakesRoute
+  ProfileRoute: typeof ProfileRoute
   ProgressRoute: typeof ProgressRoute
   StudyRoute: typeof StudyRoute
   HistoryIdRoute: typeof HistoryIdRoute
@@ -184,6 +197,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MistakesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/progress': {
       id: '/progress'
       path: '/progress'
@@ -221,6 +241,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   LanguagesRoute: LanguagesRoute,
   MistakesRoute: MistakesRoute,
+  ProfileRoute: ProfileRoute,
   ProgressRoute: ProgressRoute,
   StudyRoute: StudyRoute,
   HistoryIdRoute: HistoryIdRoute,
