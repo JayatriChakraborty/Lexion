@@ -1,9 +1,22 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { FileText, Image as ImageIcon, Mic, Info, Sparkles } from "lucide-react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useRef, useState } from "react";
+import {
+  AudioLines,
+  BookOpen,
+  FileText,
+  Image as ImageIcon,
+  Info,
+  Mic,
+  NotebookPen,
+  Newspaper,
+  Sparkles,
+  Trash2,
+  UploadCloud,
+} from "lucide-react";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { Card } from "@/components/ui-bits";
 import { languages, APP_NAME } from "@/lib/mock-data";
+import { resultForMode } from "@/lib/analysis-data";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -21,10 +34,14 @@ export const Route = createFileRoute("/analyse")({
         property: "og:description",
         content: "Submit text, images or audio and understand exactly what you did well and what to improve.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Analyse,
 });
+
+type Mode = "text" | "image" | "audio";
 
 const inputTypes = [
   { id: "text", label: "Text", icon: FileText, hint: "Type or paste anything you have written." },
@@ -32,11 +49,112 @@ const inputTypes = [
   { id: "audio", label: "Audio", icon: Mic, hint: "Recordings, monologues and conversations." },
 ] as const;
 
+const imageExamples = [
+  { label: "Notebook page", icon: NotebookPen },
+  { label: "Book or novel", icon: BookOpen },
+  { label: "Worksheet", icon: FileText },
+  { label: "Printed document", icon: Newspaper },
+];
+
+function DropZone({
+  accept,
+  formats,
+  title,
+  icon: Icon,
+  fileName,
+  onFile,
+}: {
+  accept: string;
+  formats: string;
+  title: string;
+  icon: typeof UploadCloud;
+  fileName: string | null;
+  onFile: (name: string | null) => void;
+}) {
+  const [dragging, setDragging] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div>
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragging(false);
+          const f = e.dataTransfer.files?.[0];
+          if (f) onFile(f.name);
+        }}
+        className={cn(
+          "rounded-xl border border-dashed p-10 text-center transition-colors",
+          dragging ? "border-primary bg-accent/60" : "border-border bg-secondary/40",
+        )}
+      >
+        <Icon className="mx-auto size-7 text-muted-foreground" strokeWidth={1.7} />
+        <p className="mt-3 text-sm font-semibold text-foreground">{title}</p>
+        <p className="mt-1 text-xs text-muted-foreground">Drag and drop, or choose a file</p>
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className="mt-4 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
+        >
+          Choose a file
+        </button>
+        <input
+          ref={inputRef}
+          type="file"
+          accept={accept}
+          className="hidden"
+          onChange={(e) => onFile(e.target.files?.[0]?.name ?? null)}
+        />
+        <p className="mt-4 text-xs text-muted-foreground">Supported formats: {formats}</p>
+      </div>
+
+      {fileName && (
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2.5">
+          <p className="truncate text-sm font-medium text-foreground">{fileName}</p>
+          <button
+            type="button"
+            onClick={() => onFile(null)}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+          >
+            <Trash2 className="size-3.5" />
+            Remove
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Analyse() {
-  const [type, setType] = useState<"text" | "image" | "audio">("text");
+  const navigate = useNavigate();
+  const [mode, setMode] = useState<Mode>("text");
   const [language, setLanguage] = useState("French");
   const [context, setContext] = useState("");
   const [text, setText] = useState("");
+  const [imageFile, setImageFile] = useState<string | null>(null);
+  const [audioFile, setAudioFile] = useState<string | null>(null);
+
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const ready = mode === "text" ? words > 0 : mode === "image" ? Boolean(imageFile) : Boolean(audioFile);
+
+  const submit = () => {
+    if (!ready) {
+      toast("Add something to analyse first", {
+        description:
+          mode === "text" ? "Type or paste your text." : "Upload a file, or drag one into the upload area.",
+      });
+      return;
+    }
+    toast(`${APP_NAME} is reading your ${mode}`, {
+      description: "Analysis is mocked for this preview — here is a full example result.",
+    });
+    void navigate({ to: "/results/$id", params: { id: resultForMode[mode] } });
+  };
 
   return (
     <AppShell>
@@ -53,16 +171,14 @@ function Analyse() {
               {inputTypes.map((t) => (
                 <button
                   key={t.id}
-                  onClick={() => setType(t.id)}
+                  onClick={() => setMode(t.id)}
                   className={cn(
                     "rounded-lg border p-4 text-left transition-colors",
-                    type === t.id
-                      ? "border-primary bg-accent/60"
-                      : "border-border bg-card hover:bg-secondary/60",
+                    mode === t.id ? "border-primary bg-accent/60" : "border-border bg-card hover:bg-secondary/60",
                   )}
                 >
                   <t.icon
-                    className={cn("size-5", type === t.id ? "text-primary" : "text-muted-foreground")}
+                    className={cn("size-5", mode === t.id ? "text-primary" : "text-muted-foreground")}
                     strokeWidth={1.9}
                   />
                   <p className="mt-2 text-sm font-semibold text-foreground">{t.label}</p>
@@ -73,14 +189,27 @@ function Analyse() {
           </Card>
 
           <Card>
-            {type === "text" && (
+            {mode === "text" && (
               <>
-                <label htmlFor="material" className="text-sm font-semibold text-foreground">
-                  Your material
-                </label>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Type it out or paste it in — an essay, an email, a paragraph, a transcript.
-                </p>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <label htmlFor="material" className="text-sm font-semibold text-foreground">
+                      Your material
+                    </label>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Type it out or paste it in — an essay, an email, a paragraph, a transcript.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setText("")}
+                    disabled={!text}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary disabled:opacity-40"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Clear
+                  </button>
+                </div>
                 <textarea
                   id="material"
                   value={text}
@@ -89,43 +218,71 @@ function Analyse() {
                   placeholder="Paste or write your text here…"
                   className="mt-3 w-full resize-y rounded-lg border border-input bg-background p-4 text-sm leading-relaxed text-foreground outline-none transition-shadow placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/30"
                 />
-                <p className="mt-2 text-xs text-muted-foreground">{text.trim().split(/\s+/).filter(Boolean).length} words</p>
+                <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
+                  <span>{words} words</span>
+                  <span>{text.length} characters</span>
+                </div>
               </>
             )}
 
-            {type === "image" && (
+            {mode === "image" && (
               <>
-                <h2 className="text-sm font-semibold text-foreground">Upload an image</h2>
-                <div className="mt-3 rounded-lg border border-dashed border-border bg-secondary/40 p-10 text-center">
-                  <ImageIcon className="mx-auto size-6 text-muted-foreground" strokeWidth={1.8} />
-                  <p className="mt-3 text-sm font-medium text-foreground">Drop an image or choose a file</p>
-                  <p className="mt-1 text-xs text-muted-foreground">JPG, PNG or HEIC</p>
-                  <input type="file" accept="image/*" className="mx-auto mt-4 block max-w-xs text-xs text-muted-foreground" />
+                <h2 className="text-sm font-semibold text-foreground">Upload an image of your text</h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Anything readable works — the clearer the photo, the better the reading.
+                </p>
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {imageExamples.map((e) => (
+                    <div
+                      key={e.label}
+                      className="flex items-center gap-2 rounded-lg border border-border bg-secondary/40 px-3 py-2 text-xs font-medium text-muted-foreground"
+                    >
+                      <e.icon className="size-3.5" strokeWidth={1.9} />
+                      {e.label}
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4">
+                  <DropZone
+                    accept="image/*"
+                    formats="JPG, PNG, HEIC or PDF page"
+                    title="Drop your photo or scan here"
+                    icon={ImageIcon}
+                    fileName={imageFile}
+                    onFile={setImageFile}
+                  />
                 </div>
                 <div className="mt-4 flex items-start gap-2 rounded-lg border border-info/25 bg-info-soft p-3">
                   <Info className="mt-0.5 size-4 shrink-0 text-info" />
                   <p className="text-xs leading-relaxed text-foreground/80">
-                    <span className="font-semibold">Text recognition is coming soon.</span> You can upload and
-                    keep images in your history now; {APP_NAME} will read them automatically in a future release.
+                    <span className="font-semibold">Text recognition is mocked for now.</span> {APP_NAME} will
+                    show you the extracted text before analysing it, so you can always check what it read.
                   </p>
                 </div>
               </>
             )}
 
-            {type === "audio" && (
+            {mode === "audio" && (
               <>
-                <h2 className="text-sm font-semibold text-foreground">Upload audio</h2>
-                <div className="mt-3 rounded-lg border border-dashed border-border bg-secondary/40 p-10 text-center">
-                  <Mic className="mx-auto size-6 text-muted-foreground" strokeWidth={1.8} />
-                  <p className="mt-3 text-sm font-medium text-foreground">Drop a recording or choose a file</p>
-                  <p className="mt-1 text-xs text-muted-foreground">MP3, WAV or M4A</p>
-                  <input type="file" accept="audio/*" className="mx-auto mt-4 block max-w-xs text-xs text-muted-foreground" />
+                <h2 className="text-sm font-semibold text-foreground">Upload a recording</h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Monologues, conversations, presentations or read-aloud practice.
+                </p>
+                <div className="mt-4">
+                  <DropZone
+                    accept="audio/*"
+                    formats="MP3, WAV, M4A, OGG or WEBM · up to 20 minutes"
+                    title="Drop your audio here"
+                    icon={AudioLines}
+                    fileName={audioFile}
+                    onFile={setAudioFile}
+                  />
                 </div>
                 <div className="mt-4 flex items-start gap-2 rounded-lg border border-info/25 bg-info-soft p-3">
                   <Info className="mt-0.5 size-4 shrink-0 text-info" />
                   <p className="text-xs leading-relaxed text-foreground/80">
-                    <span className="font-semibold">Audio analysis is coming soon.</span> Pronunciation and
-                    fluency feedback will arrive in a future release. You can still paste a transcript today.
+                    <span className="font-semibold">Transcription is mocked for now.</span> You will always see
+                    the transcript {APP_NAME} worked from alongside your original recording.
                   </p>
                 </div>
               </>
@@ -152,32 +309,30 @@ function Analyse() {
 
           <Card>
             <label htmlFor="context" className="text-sm font-semibold text-foreground">
-              What is this about?
+              Optional context
             </label>
-            <span className="ml-2 text-xs font-medium text-muted-foreground">Optional</span>
             <textarea
               id="context"
               rows={4}
               value={context}
               onChange={(e) => setContext(e.target.value)}
-              placeholder="Example: A 5-minute monologue about my university experience."
+              placeholder="I'm recording a five-minute monologue about my university experience."
               className="mt-3 w-full resize-y rounded-lg border border-input bg-background p-3 text-sm leading-relaxed text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring/30"
             />
             <div className="mt-3 flex items-start gap-2 rounded-lg bg-accent/50 p-3">
               <Sparkles className="mt-0.5 size-4 shrink-0 text-primary" />
-              <p className="text-xs leading-relaxed text-foreground/80">
-                Context helps {APP_NAME} understand what you are trying to communicate and give more relevant
-                feedback.
-              </p>
+              <div>
+                <p className="text-xs font-semibold text-foreground">Why context helps</p>
+                <p className="mt-1 text-xs leading-relaxed text-foreground/80">
+                  Knowing what you're trying to communicate helps {APP_NAME} evaluate vocabulary, register,
+                  grammar and pronunciation more accurately.
+                </p>
+              </div>
             </div>
           </Card>
 
           <button
-            onClick={() =>
-              toast("Analysis is mocked for now", {
-                description: "Once analysis is live, your result will open here and be saved to your history.",
-              })
-            }
+            onClick={submit}
             className="w-full rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-card transition-colors hover:bg-primary/90"
           >
             Analyse
