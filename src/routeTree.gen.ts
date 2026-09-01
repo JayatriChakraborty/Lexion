@@ -13,9 +13,12 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnalyseRouteImport } from './routes/analyse'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LanguagesRouteImport } from './routes/languages'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as MistakesRouteImport } from './routes/mistakes'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ProgressRouteImport } from './routes/progress'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as StudyRouteImport } from './routes/study'
 import { Route as HistoryIndexRouteImport } from './routes/history.index'
 import { Route as HistoryIdRouteImport } from './routes/history.$id'
@@ -41,6 +44,11 @@ const LanguagesRoute = LanguagesRouteImport.update({
   path: '/languages',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MistakesRoute = MistakesRouteImport.update({
   id: '/mistakes',
   path: '/mistakes',
@@ -54,6 +62,16 @@ const ProfileRoute = ProfileRouteImport.update({
 const ProgressRoute = ProgressRouteImport.update({
   id: '/progress',
   path: '/progress',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StudyRoute = StudyRouteImport.update({
@@ -82,9 +100,12 @@ export interface FileRoutesByFullPath {
   '/analyse': typeof AnalyseRoute
   '/dashboard': typeof DashboardRoute
   '/languages': typeof LanguagesRoute
+  '/login': typeof LoginRoute
   '/mistakes': typeof MistakesRoute
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/signup': typeof SignupRoute
   '/study': typeof StudyRoute
   '/history/$id': typeof HistoryIdRoute
   '/results/$id': typeof ResultsIdRoute
@@ -95,9 +116,12 @@ export interface FileRoutesByTo {
   '/analyse': typeof AnalyseRoute
   '/dashboard': typeof DashboardRoute
   '/languages': typeof LanguagesRoute
+  '/login': typeof LoginRoute
   '/mistakes': typeof MistakesRoute
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/signup': typeof SignupRoute
   '/study': typeof StudyRoute
   '/history/$id': typeof HistoryIdRoute
   '/results/$id': typeof ResultsIdRoute
@@ -109,9 +133,12 @@ export interface FileRoutesById {
   '/analyse': typeof AnalyseRoute
   '/dashboard': typeof DashboardRoute
   '/languages': typeof LanguagesRoute
+  '/login': typeof LoginRoute
   '/mistakes': typeof MistakesRoute
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/signup': typeof SignupRoute
   '/study': typeof StudyRoute
   '/history/$id': typeof HistoryIdRoute
   '/results/$id': typeof ResultsIdRoute
@@ -124,9 +151,12 @@ export interface FileRouteTypes {
     | '/analyse'
     | '/dashboard'
     | '/languages'
+    | '/login'
     | '/mistakes'
     | '/profile'
     | '/progress'
+    | '/reset-password'
+    | '/signup'
     | '/study'
     | '/history/$id'
     | '/results/$id'
@@ -137,9 +167,12 @@ export interface FileRouteTypes {
     | '/analyse'
     | '/dashboard'
     | '/languages'
+    | '/login'
     | '/mistakes'
     | '/profile'
     | '/progress'
+    | '/reset-password'
+    | '/signup'
     | '/study'
     | '/history/$id'
     | '/results/$id'
@@ -150,9 +183,12 @@ export interface FileRouteTypes {
     | '/analyse'
     | '/dashboard'
     | '/languages'
+    | '/login'
     | '/mistakes'
     | '/profile'
     | '/progress'
+    | '/reset-password'
+    | '/signup'
     | '/study'
     | '/history/$id'
     | '/results/$id'
@@ -164,9 +200,12 @@ export interface RootRouteChildren {
   AnalyseRoute: typeof AnalyseRoute
   DashboardRoute: typeof DashboardRoute
   LanguagesRoute: typeof LanguagesRoute
+  LoginRoute: typeof LoginRoute
   MistakesRoute: typeof MistakesRoute
   ProfileRoute: typeof ProfileRoute
   ProgressRoute: typeof ProgressRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  SignupRoute: typeof SignupRoute
   StudyRoute: typeof StudyRoute
   HistoryIdRoute: typeof HistoryIdRoute
   ResultsIdRoute: typeof ResultsIdRoute
@@ -203,6 +242,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LanguagesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mistakes': {
       id: '/mistakes'
       path: '/mistakes'
@@ -222,6 +268,20 @@ declare module '@tanstack/react-router' {
       path: '/progress'
       fullPath: '/progress'
       preLoaderRoute: typeof ProgressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/study': {
@@ -260,9 +320,12 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyseRoute: AnalyseRoute,
   DashboardRoute: DashboardRoute,
   LanguagesRoute: LanguagesRoute,
+  LoginRoute: LoginRoute,
   MistakesRoute: MistakesRoute,
   ProfileRoute: ProfileRoute,
   ProgressRoute: ProgressRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
+  SignupRoute: SignupRoute,
   StudyRoute: StudyRoute,
   HistoryIdRoute: HistoryIdRoute,
   ResultsIdRoute: ResultsIdRoute,
