@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import type { User } from "firebase/auth";
 import { authService } from "@/services/authService";
 import { profileService, type Profile } from "@/services/profileService";
@@ -83,13 +83,12 @@ export function AuthLoading({ label = "Preparing your workspace…" }: { label?:
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { status } = useAuth();
   const navigate = useNavigate();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      void navigate({ to: "/login", search: { redirect: pathname }, replace: true });
+      void navigate({ to: "/login", replace: true });
     }
-  }, [status, navigate, pathname]);
+  }, [status, navigate]);
 
   if (status !== "authenticated") return <AuthLoading />;
   return <>{children}</>;
