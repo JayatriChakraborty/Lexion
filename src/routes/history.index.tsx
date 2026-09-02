@@ -3,7 +3,9 @@ import { useMemo, useState } from "react";
 import { ChevronRight, Search } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { StatusBadge, TypeBadge } from "@/components/ui-bits";
-import { submissions, type SubmissionType, type AnalysisStatus } from "@/lib/mock-data";
+import { APP_NAME, type SubmissionType, type AnalysisStatus } from "@/lib/mock-data";
+import { useSubmissions } from "@/hooks/use-lexion-data";
+import { typeLabel } from "./dashboard";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/history/")({
@@ -29,25 +31,37 @@ const types: (SubmissionType | "All")[] = ["All", "Text", "Image", "Audio", "Tra
 const statuses: (AnalysisStatus | "All")[] = ["All", "Analysed", "Not analysed"];
 
 function HistoryPage() {
+  const query = useSubmissions();
   const [type, setType] = useState<(typeof types)[number]>("All");
   const [status, setStatus] = useState<(typeof statuses)[number]>("All");
   const [language, setLanguage] = useState("All");
   const [sort, setSort] = useState<"newest" | "oldest">("newest");
   const [q, setQ] = useState("");
 
-  const langs = useMemo(() => ["All", ...new Set(submissions.map((s) => s.language))], []);
+  const all = useMemo(
+    () =>
+      (query.data ?? []).map((s) => ({
+        ...s,
+        typeLabel: typeLabel(s.input_type),
+        status: (s.analysed ? "Analysed" : "Not analysed") as AnalysisStatus,
+        preview: s.original_text.slice(0, 200),
+      })),
+    [query.data],
+  );
+
+  const langs = useMemo(() => ["All", ...new Set(all.map((s) => s.language_name).filter(Boolean))], [all]);
 
   const items = useMemo(
     () =>
-      submissions
-        .filter((s) => (type === "All" ? true : s.type === type))
+      all
+        .filter((s) => (type === "All" ? true : s.typeLabel === type))
         .filter((s) => (status === "All" ? true : s.status === status))
-        .filter((s) => (language === "All" ? true : s.language === language))
+        .filter((s) => (language === "All" ? true : s.language_name === language))
         .filter((s) =>
           q.trim() ? (s.title + s.preview).toLowerCase().includes(q.trim().toLowerCase()) : true,
         )
-        .sort((a, b) => (sort === "newest" ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date))),
-    [type, status, language, q, sort],
+        .sort((a, b) => (sort === "newest" ? b.createdAtMs - a.createdAtMs : a.createdAtMs - b.createdAtMs)),
+    [all, type, status, language, q, sort],
   );
 
   return (
@@ -117,32 +131,67 @@ function HistoryPage() {
       </div>
 
       <div className="space-y-3">
-        {items.map((s) => (
-          <Link
-            key={s.id}
-            to="/history/$id"
-            params={{ id: s.id }}
-            className="surface-card group flex items-start gap-4 p-5 transition-shadow hover:shadow-lift"
-          >
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <TypeBadge type={s.type} />
-                <span className="text-xs font-medium text-muted-foreground">{s.language}</span>
-                <span className="text-xs text-muted-foreground">· {s.date}</span>
+        {query.isLoading && (
+          <>
+            <div className="h-28 animate-pulse rounded-xl bg-secondary" />
+            <div className="h-28 animate-pulse rounded-xl bg-secondary" />
+          </>
+        )}
+
+        {query.isError && (
+          <div className="surface-card p-10 text-center">
+            <p className="text-sm font-medium text-foreground">
+              Something went wrong while loading your history.
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">Please refresh the page and try again.</p>
+          </div>
+        )}
+
+        {!query.isLoading &&
+          !query.isError &&
+          items.map((s) => (
+            <Link
+              key={s.id}
+              to="/history/$id"
+              params={{ id: s.id }}
+              className="surface-card group flex items-start gap-4 p-5 transition-shadow hover:shadow-lift"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <TypeBadge type={s.typeLabel} />
+                  <span className="text-xs font-medium text-muted-foreground">{s.language_name}</span>
+                  <span className="text-xs text-muted-foreground">· {s.date}</span>
+                </div>
+                <h3 className="mt-2 text-[15px] font-semibold text-foreground">{s.title}</h3>
+                <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{s.preview}</p>
               </div>
-              <h3 className="mt-2 text-[15px] font-semibold text-foreground">{s.title}</h3>
-              <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{s.preview}</p>
-            </div>
-            <div className="flex shrink-0 flex-col items-end gap-3">
-              <StatusBadge status={s.status} />
-              <ChevronRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-            </div>
-          </Link>
-        ))}
-        {items.length === 0 && (
+              <div className="flex shrink-0 flex-col items-end gap-3">
+                <StatusBadge status={s.status} />
+                <ChevronRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+              </div>
+            </Link>
+          ))}
+
+        {!query.isLoading && !query.isError && items.length === 0 && all.length > 0 && (
           <div className="surface-card p-10 text-center">
             <p className="text-sm font-medium text-foreground">Nothing matches these filters.</p>
             <p className="mt-1 text-sm text-muted-foreground">Try widening the language or type filter.</p>
+          </div>
+        )}
+
+        {!query.isLoading && !query.isError && all.length === 0 && (
+          <div className="surface-card p-10 text-center">
+            <p className="text-[15px] font-semibold text-foreground">Your language journey starts here.</p>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+              Analyse your first piece of writing or speech and {APP_NAME} will begin learning your language
+              patterns.
+            </p>
+            <Link
+              to="/analyse"
+              className="mt-5 inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Analyse something
+            </Link>
           </div>
         )}
       </div>
