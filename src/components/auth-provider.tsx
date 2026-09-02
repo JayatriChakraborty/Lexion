@@ -3,7 +3,6 @@ import { useNavigate } from "@tanstack/react-router";
 import type { User } from "firebase/auth";
 import { authService } from "@/services/authService";
 import { profileService, type Profile } from "@/services/profileService";
-import { Logo } from "@/components/app-shell";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
@@ -73,7 +72,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function AuthLoading({ label = "Preparing your workspace…" }: { label?: string }) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4">
-      <Logo />
+      <span className="grid size-8 place-items-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
+        L
+      </span>
       <p className="text-sm text-muted-foreground">{label}</p>
     </div>
   );

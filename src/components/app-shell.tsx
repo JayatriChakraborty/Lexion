@@ -14,6 +14,9 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RequireAuth, useAuth } from "@/components/auth-provider";
+import { LogOut } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import { APP_NAME } from "@/lib/mock-data";
 
 const mainNav = [
@@ -82,6 +85,31 @@ function NavItem({
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
+  return (
+    <RequireAuth>
+      <AppShellInner>{children}</AppShellInner>
+    </RequireAuth>
+  );
+}
+
+function SignOutButton() {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+  return (
+    <button
+      onClick={async () => {
+        await signOut();
+        void navigate({ to: "/login", replace: true });
+      }}
+      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+    >
+      <LogOut className="size-[18px] shrink-0" strokeWidth={1.9} />
+      Log out
+    </button>
+  );
+}
+
+function AppShellInner({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
 
@@ -104,6 +132,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             onClick={onClick}
           />
         ))}
+        <SignOutButton />
       </nav>
     </div>
   );
