@@ -1,9 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import type { User } from "firebase/auth";
 import { authService } from "@/services/authService";
 import { profileService, type Profile } from "@/services/profileService";
-import { Logo } from "@/components/app-shell";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
@@ -73,7 +72,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function AuthLoading({ label = "Preparing your workspace…" }: { label?: string }) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4">
-      <Logo />
+      <span className="grid size-8 place-items-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
+        L
+      </span>
       <p className="text-sm text-muted-foreground">{label}</p>
     </div>
   );
@@ -83,13 +84,12 @@ export function AuthLoading({ label = "Preparing your workspace…" }: { label?:
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { status } = useAuth();
   const navigate = useNavigate();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      void navigate({ to: "/login", search: { redirect: pathname }, replace: true });
+      void navigate({ to: "/login", replace: true });
     }
-  }, [status, navigate, pathname]);
+  }, [status, navigate]);
 
   if (status !== "authenticated") return <AuthLoading />;
   return <>{children}</>;
