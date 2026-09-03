@@ -1,0 +1,59 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function owns(data) {
+      return signedIn() && data.user_id == request.auth.uid;
+    }
+
+    // Ownership must never be transferred to another UID on update.
+    function ownershipUnchanged() {
+      return request.resource.data.user_id == resource.data.user_id;
+    }
+
+    // profiles/{uid} — the document id IS the Firebase Authentication UID.
+    match /profiles/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.auth.uid == uid;
+      allow update: if signedIn() && request.auth.uid == uid;
+      allow delete: if signedIn() && request.auth.uid == uid;
+    }
+
+    // All other Lexion collections are owned via the user_id field.
+    match /{collection}/{docId} {
+      allow read: if collection in [
+                       'languages', 'submissions', 'analyses', 'corrections', 'strengths',
+                       'naturalness_feedback', 'register_feedback', 'translations',
+                       'word_analysis', 'mistakes', 'study_notes', 'progress', 'vocabulary'
+                     ]
+                     && owns(resource.data);
+
+      allow create: if collection in [
+                         'languages', 'submissions', 'analyses', 'corrections', 'strengths',
+                         'naturalness_feedback', 'register_feedback', 'translations',
+                         'word_analysis', 'mistakes', 'study_notes', 'progress', 'vocabulary'
+                       ]
+                       && owns(request.resource.data);
+
+      allow update: if collection in [
+                         'languages', 'submissions', 'analyses', 'corrections', 'strengths',
+                         'naturalness_feedback', 'register_feedback', 'translations',
+                         'word_analysis', 'mistakes', 'study_notes', 'progress', 'vocabulary'
+                       ]
+                       && owns(resource.data)
+                       && ownershipUnchanged();
+
+      allow delete: if collection in [
+                         'languages', 'submissions', 'analyses', 'corrections', 'strengths',
+                         'naturalness_feedback', 'register_feedback', 'translations',
+                         'word_analysis', 'mistakes', 'study_notes', 'progress', 'vocabulary'
+                       ]
+                       && owns(resource.data);
+    }
+  }
+}
