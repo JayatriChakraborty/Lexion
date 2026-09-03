@@ -16,7 +16,14 @@ import {
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { Card } from "@/components/ui-bits";
 import { languages, APP_NAME } from "@/lib/mock-data";
-import { resultForMode } from "@/lib/analysis-data";
+import { resultForMode, getResult } from "@/lib/analysis-data";
+import { useAuth } from "@/components/auth-provider";
+import { useQueryClient } from "@tanstack/react-query";
+import { analysisService, toStandardAnalysis } from "@/services/analysisService";
+import { languageService } from "@/services/languageService";
+import { submissionService } from "@/services/submissionService";
+import { mistakeService } from "@/services/mistakeService";
+import { friendlyError } from "@/services/firestore-helpers";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -132,6 +139,9 @@ function DropZone({
 
 function Analyse() {
   const navigate = useNavigate();
+  const { uid } = useAuth();
+  const queryClient = useQueryClient();
+  const [saving, setSaving] = useState(false);
   const [mode, setMode] = useState<Mode>("text");
   const [language, setLanguage] = useState("French");
   const [context, setContext] = useState("");
@@ -142,7 +152,7 @@ function Analyse() {
   const words = text.trim() ? text.trim().split(/\s+/).length : 0;
   const ready = mode === "text" ? words > 0 : mode === "image" ? Boolean(imageFile) : Boolean(audioFile);
 
-  const submit = () => {
+  const submit = async () => {
     if (!ready) {
       toast("Add something to analyse first", {
         description:
@@ -150,10 +160,58 @@ function Analyse() {
       });
       return;
     }
-    toast(`${APP_NAME} is reading your ${mode}`, {
-      description: "Analysis is mocked for this preview — here is a full example result.",
-    });
-    void navigate({ to: "/results/$id", params: { id: resultForMode[mode] } });
+    if (!uid) {
+      toast.error("Your session has expired. Please log in again.");
+      return;
+    }
+
+    setSaving(true);
+    const resultId = resultForMode[mode];
+    const mockResult = getResult(resultId);
+    const material =
+      mode === "text" ? text : mockResult?.extractedText ?? mockResult?.transcript ?? mockResult?.original ?? "";
+    const title =
+      mode === "text"
+        ? text.trim().split(/\s+/).slice(0, 8).join(" ") + (words > 8 ? "…" : "")
+        : (mode === "image" ? imageFile : audioFile) || `${mode} submission`;
+
+    try {
+      const languageId = await languageService.ensure(uid, language);
+      const submissionId = await submissionService.create({
+        user_id: uid,
+        language_id: languageId,
+        language_name: language,
+        input_type: mode,
+        title,
+        original_text: material,
+        context,
+      });
+
+      if (mockResult) {
+        // Mock analysis today, real AI analysis later — same standardised object.
+        await analysisService.save(uid, submissionId, toStandardAnalysis(mockResult));
+        for (const issue of mockResult.issues.slice(0, 5)) {
+          await mistakeService.record({
+            user_id: uid,
+            language_id: languageId,
+            category: issue.category,
+            mistake_pattern: issue.youWrote,
+            correction: issue.better,
+            explanation: issue.why,
+          });
+        }
+      }
+
+      await queryClient.invalidateQueries();
+      toast(`${APP_NAME} has analysed your ${mode}`, {
+        description: "Analysis is mocked for this preview, and it is now saved to your history.",
+      });
+      void navigate({ to: "/results/$id", params: { id: resultId } });
+    } catch (error) {
+      toast.error(friendlyError(error, "Your submission couldn't be saved. Please try again."));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
