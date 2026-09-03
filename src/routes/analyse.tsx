@@ -390,10 +390,11 @@ function Analyse() {
           </Card>
 
           <button
-            onClick={submit}
-            className="w-full rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-card transition-colors hover:bg-primary/90"
+            onClick={() => void submit()}
+            disabled={saving}
+            className="w-full rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-card transition-colors hover:bg-primary/90 disabled:opacity-60"
           >
-            Analyse
+            {saving ? "Analysing…" : "Analyse"}
           </button>
           <p className="text-center text-xs text-muted-foreground">
             Nothing you submit is graded. You'll get an explanation, not a score.
