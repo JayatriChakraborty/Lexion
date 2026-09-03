@@ -149,7 +149,7 @@ function MistakeBank() {
                     Understanding <span className="font-semibold text-foreground">{m.mastery_score}%</span>
                   </span>
                 </div>
-                <Meter value={m.mastery_score} tone={m.mastery_score > 60 ? "primary" : "warning"} />
+                <Meter value={m.mastery_score} tone={m.mastery_score > 60 ? "primary" : "gold"} />
               </Card>
             ))}
             {items.length === 0 && (
