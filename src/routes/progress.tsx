@@ -15,7 +15,9 @@ import {
 } from "recharts";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { Card, Meter } from "@/components/ui-bits";
-import { progressSeries, mistakeReduction, pronunciationScores } from "@/lib/mock-data";
+import { progressSeries, mistakeReduction, APP_NAME } from "@/lib/mock-data";
+import { useLanguages, useProgress, useSubmissions } from "@/hooks/use-lexion-data";
+import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/progress")({
@@ -42,17 +44,62 @@ const ranges = ["7", "30", "90"] as const;
 function ProgressPage() {
   const [range, setRange] = useState<(typeof ranges)[number]>("30");
   const data = progressSeries[range];
-  const latest = data[data.length - 1]!;
+  const progress = useProgress();
+  const languages = useLanguages();
+  const submissions = useSubmissions();
+
+  const activeLanguage = (languages.data ?? []).find((l) => l.is_active) ?? (languages.data ?? [])[0];
+  const record =
+    (progress.data ?? []).find((p) => p.language_id === activeLanguage?.id) ?? (progress.data ?? [])[0];
 
   const summary = [
-    { label: "Grammar accuracy", value: latest.grammar },
-    { label: "Spelling accuracy", value: latest.spelling },
-    { label: "Vocabulary development", value: latest.vocabulary },
-    { label: "Naturalness", value: latest.naturalness },
-    { label: "Writing complexity", value: latest.complexity },
+    { label: "Grammar accuracy", value: record?.grammar_score ?? 0 },
+    { label: "Spelling accuracy", value: record?.spelling_score ?? 0 },
+    { label: "Vocabulary development", value: record?.vocabulary_score ?? 0 },
+    { label: "Naturalness", value: record?.naturalness_score ?? 0 },
+    { label: "Writing complexity", value: record?.writing_score ?? 0 },
   ];
 
+  const pronunciation = [
+    { label: "Overall pronunciation", value: record?.pronunciation_score ?? 0 },
+  ];
+
+  const loading = progress.isLoading || submissions.isLoading;
+  const hasData = (submissions.data ?? []).length > 0;
+
   const axis = { stroke: "var(--muted-foreground)", fontSize: 12 };
+
+  if (loading) {
+    return (
+      <AppShell>
+        <PageHeader title="Progress" />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="h-40 animate-pulse rounded-xl bg-secondary" />
+          <div className="h-40 animate-pulse rounded-xl bg-secondary" />
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (!hasData) {
+    return (
+      <AppShell>
+        <PageHeader title="Progress" />
+        <Card className="border-dashed p-10 text-center">
+          <p className="mx-auto max-w-md text-[15px] leading-relaxed text-muted-foreground">
+            {APP_NAME} is still learning your language patterns. Once you've analysed a few submissions, your
+            development will be shown here — calmly, and without points or streaks.
+          </p>
+          <Link
+            to="/analyse"
+            className="mt-5 inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Analyse something
+          </Link>
+        </Card>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>
@@ -80,8 +127,13 @@ function ProgressPage() {
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card className="lg:col-span-1">
           <p className="text-sm text-muted-foreground">Estimated CEFR level</p>
-          <p className="mt-1 text-3xl font-bold tracking-tight text-foreground">B2</p>
-          <p className="mt-1 text-xs text-muted-foreground">French · moving steadily towards C1</p>
+          <p className="mt-1 text-3xl font-bold tracking-tight text-foreground">
+            {activeLanguage?.current_level ?? "—"}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {activeLanguage?.language_name ?? "Your language"} · moving towards{" "}
+            {activeLanguage?.target_level ?? "your target"}
+          </p>
           <div className="mt-4">
             <Meter value={68} />
             <p className="mt-2 text-xs text-muted-foreground">68% of the way through the B2 band</p>
@@ -196,7 +248,7 @@ function ProgressPage() {
             Based on transcripts and notes so far; fuller audio analysis arrives soon.
           </p>
           <div className="mt-5 space-y-4">
-            {pronunciationScores.map((p) => (
+            {pronunciation.map((p) => (
               <div key={p.label}>
                 <div className="flex items-baseline justify-between text-sm">
                   <span className="text-muted-foreground">{p.label}</span>
