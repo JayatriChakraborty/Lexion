@@ -23,6 +23,7 @@ import { analysisService, toStandardAnalysis } from "@/services/analysisService"
 import { languageService } from "@/services/languageService";
 import { submissionService } from "@/services/submissionService";
 import { mistakeService } from "@/services/mistakeService";
+import { progressService } from "@/services/progressService";
 import { friendlyError } from "@/services/firestore-helpers";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -190,6 +191,15 @@ function Analyse() {
       if (mockResult) {
         // Mock analysis today, real AI analysis later — same standardised object.
         await analysisService.save(uid, submissionId, toStandardAnalysis(mockResult));
+        const standard = toStandardAnalysis(mockResult);
+        await progressService.upsert(uid, languageId, {
+          grammar_score: standard.overall_score,
+          spelling_score: Math.min(100, standard.overall_score + 6),
+          vocabulary_score: Math.max(0, standard.overall_score - 4),
+          naturalness_score: Math.max(0, standard.overall_score - 8),
+          pronunciation_score: mode === "audio" ? standard.overall_score : 0,
+          writing_score: standard.overall_score,
+        });
         for (const issue of mockResult.issues.slice(0, 5)) {
           await mistakeService.record({
             user_id: uid,
