@@ -1,8 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { Card } from "@/components/ui-bits";
-import { languageProfiles, languages, APP_NAME } from "@/lib/mock-data";
+import { languages, APP_NAME } from "@/lib/mock-data";
+import { useAuth } from "@/components/auth-provider";
+import { useLanguages } from "@/hooks/use-lexion-data";
+import { profileService } from "@/services/profileService";
+import { friendlyError } from "@/services/firestore-helpers";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/profile")({
@@ -37,13 +43,50 @@ const styles = [
 ];
 
 function ProfilePage() {
+  const { uid, user } = useAuth();
+  const queryClient = useQueryClient();
+  const languageQuery = useLanguages();
+
+  const profileQuery = useQuery({
+    queryKey: ["profile", uid],
+    enabled: Boolean(uid),
+    queryFn: () => profileService.get(uid!),
+  });
+
   const [depth, setDepth] = useState("balanced");
   const [style, setStyle] = useState("gentle");
-  const [goals, setGoals] = useState(
-    "Reach C1 French for university seminars, and be comfortable writing formal emails without checking every phrase.",
-  );
+  const [goals, setGoals] = useState("");
   const [native, setNative] = useState("English");
   const [notifications, setNotifications] = useState(true);
+
+  useEffect(() => {
+    const p = profileQuery.data as (Record<string, unknown> & { native_language?: string }) | null | undefined;
+    if (!p) return;
+    if (p.native_language) setNative(p.native_language);
+    if (typeof p["goals"] === "string") setGoals(p["goals"]);
+    if (typeof p["explanation_depth"] === "string") setDepth(p["explanation_depth"]);
+    if (typeof p["correction_style"] === "string") setStyle(p["correction_style"]);
+    if (typeof p["email_summaries"] === "boolean") setNotifications(p["email_summaries"]);
+  }, [profileQuery.data]);
+
+  const save = async (patch: Record<string, unknown>) => {
+    if (!uid) return;
+    try {
+      await profileService.update(uid, patch);
+      await queryClient.invalidateQueries({ queryKey: ["profile", uid] });
+    } catch (error) {
+      toast.error(friendlyError(error, "That change couldn't be saved. Please try again."));
+    }
+  };
+
+  const displayName =
+    (profileQuery.data?.display_name as string | undefined) || user?.displayName || "Learner";
+  const initials = displayName
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <AppShell>
@@ -54,11 +97,11 @@ function ProfilePage() {
           <h2 className="text-sm font-semibold text-foreground">Account</h2>
           <div className="mt-4 flex items-center gap-4">
             <span className="grid size-12 place-items-center rounded-full bg-primary/10 text-base font-bold text-primary">
-              AF
+              {initials || "L"}
             </span>
             <div>
-              <p className="text-[15px] font-semibold text-foreground">Anya Forger</p>
-              <p className="text-sm text-muted-foreground">anya@example.com</p>
+              <p className="text-[15px] font-semibold text-foreground">{displayName}</p>
+              <p className="text-sm text-muted-foreground">{user?.email ?? ""}</p>
             </div>
           </div>
           <div className="mt-5">
@@ -68,7 +111,10 @@ function ProfilePage() {
             <select
               id="native"
               value={native}
-              onChange={(e) => setNative(e.target.value)}
+              onChange={(e) => {
+                setNative(e.target.value);
+                void save({ native_language: e.target.value });
+              }}
               className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
             >
               {languages.map((l) => (
@@ -81,18 +127,23 @@ function ProfilePage() {
         <Card>
           <h2 className="text-sm font-semibold text-foreground">Learning languages</h2>
           <div className="mt-4 space-y-3">
-            {languageProfiles.map((l) => (
+            {(languageQuery.data ?? []).map((l) => (
               <div key={l.id} className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
                 <div>
                   <p className="text-sm font-medium text-foreground">
-                    {l.name}
-                    {l.variant ? ` · ${l.variant}` : ""}
+                    {l.language_name}
+                    {l.language_variant ? ` · ${l.language_variant}` : ""}
                   </p>
-                  <p className="text-xs text-muted-foreground">Current level {l.level}</p>
+                  <p className="text-xs text-muted-foreground">Current level {l.current_level}</p>
                 </div>
-                <span className="text-xs font-medium text-muted-foreground">Target {l.target}</span>
+                <span className="text-xs font-medium text-muted-foreground">Target {l.target_level}</span>
               </div>
             ))}
+            {(languageQuery.data ?? []).length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                No languages yet — analyse something and the language you choose will appear here.
+              </p>
+            )}
           </div>
         </Card>
 
@@ -104,7 +155,9 @@ function ProfilePage() {
             id="goals"
             rows={3}
             value={goals}
+            placeholder="For example: reach C1 French for university seminars."
             onChange={(e) => setGoals(e.target.value)}
+            onBlur={() => void save({ goals })}
             className="mt-3 w-full resize-y rounded-lg border border-input bg-background p-3 text-sm leading-relaxed outline-none focus:ring-2 focus:ring-ring/30"
           />
         </Card>
@@ -115,7 +168,10 @@ function ProfilePage() {
             {depths.map((d) => (
               <button
                 key={d.id}
-                onClick={() => setDepth(d.id)}
+                onClick={() => {
+                  setDepth(d.id);
+                  void save({ explanation_depth: d.id });
+                }}
                 className={cn(
                   "w-full rounded-lg border p-3 text-left transition-colors",
                   depth === d.id ? "border-primary bg-accent/60" : "border-border hover:bg-secondary/60",
@@ -134,7 +190,10 @@ function ProfilePage() {
             {styles.map((s) => (
               <button
                 key={s.id}
-                onClick={() => setStyle(s.id)}
+                onClick={() => {
+                  setStyle(s.id);
+                  void save({ correction_style: s.id });
+                }}
                 className={cn(
                   "w-full rounded-lg border p-3 text-left transition-colors",
                   style === s.id ? "border-primary bg-accent/60" : "border-border hover:bg-secondary/60",
@@ -158,7 +217,11 @@ function ProfilePage() {
               role="switch"
               aria-checked={notifications}
               aria-label="Analysis summaries by email"
-              onClick={() => setNotifications((v) => !v)}
+              onClick={() => {
+                const next = !notifications;
+                setNotifications(next);
+                void save({ email_summaries: next });
+              }}
               className={cn(
                 "h-6 w-11 rounded-full p-0.5 transition-colors",
                 notifications ? "bg-primary" : "bg-secondary border border-border",
