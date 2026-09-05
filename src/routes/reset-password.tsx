@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { AuthShell, fieldClass } from "./login";
 import { authService } from "@/services/authService";
 import { friendlyError } from "@/services/firestore-helpers";
+import { DEMO_MODE } from "@/lib/demo";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
@@ -27,6 +28,11 @@ function ResetPasswordPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (DEMO_MODE) {
+      // DEMO_MODE: no Firebase Auth request — just show the confirmation state.
+      setSent(true);
+      return;
+    }
     setBusy(true);
     try {
       await authService.sendReset(email.trim());

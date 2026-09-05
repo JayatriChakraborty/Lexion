@@ -25,6 +25,7 @@ import { submissionService } from "@/services/submissionService";
 import { mistakeService } from "@/services/mistakeService";
 import { progressService } from "@/services/progressService";
 import { friendlyError } from "@/services/firestore-helpers";
+import { DEMO_MODE } from "@/lib/demo";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -177,6 +178,15 @@ function Analyse() {
         : (mode === "image" ? imageFile : audioFile) || `${mode} submission`;
 
     try {
+      if (DEMO_MODE) {
+        // DEMO_MODE: skip all Firestore writes; go straight to the mocked results page.
+        toast(`${APP_NAME} has analysed your ${mode}`, {
+          description: "Demo mode is on — nothing was saved to your history.",
+        });
+        void navigate({ to: "/results/$id", params: { id: resultId } });
+        return;
+      }
+
       const languageId = await languageService.ensure(uid, language);
       const submissionId = await submissionService.create({
         user_id: uid,
