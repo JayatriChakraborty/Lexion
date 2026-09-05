@@ -30,6 +30,10 @@ export function GoogleButton({ label, onDone }: { label: string; onDone: () => v
       type="button"
       disabled={busy}
       onClick={async () => {
+        if (DEMO_MODE) {
+          onDone();
+          return;
+        }
         setBusy(true);
         try {
           await authService.signInWithGoogle();
