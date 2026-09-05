@@ -10,6 +10,7 @@ import { useAuth } from "@/components/auth-provider";
 import { useLanguages, useSubmissions } from "@/hooks/use-lexion-data";
 import { languageService } from "@/services/languageService";
 import { friendlyError } from "@/services/firestore-helpers";
+import { DEMO_MODE } from "@/lib/demo";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/languages")({
@@ -56,6 +57,10 @@ function LanguagesPage() {
   const refresh = () => queryClient.invalidateQueries();
 
   const patch = async (id: string, changes: Record<string, string | boolean>) => {
+    if (DEMO_MODE) {
+      toast("Demo mode is on — changes aren't saved.");
+      return;
+    }
     try {
       await languageService.update(id, changes);
       await refresh();
@@ -66,6 +71,11 @@ function LanguagesPage() {
 
   const add = async () => {
     if (!uid) return;
+    if (DEMO_MODE) {
+      toast("Demo mode is on — changes aren't saved.");
+      setAdding(false);
+      return;
+    }
     try {
       await languageService.create(uid, { language_name: newLanguage, is_active: items.length === 0 });
       setAdding(false);
