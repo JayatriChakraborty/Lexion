@@ -8,4 +8,5 @@
  *
  * To restore the real Firebase flow, set this to false. Nothing else changes.
  */
-export const DEMO_MODE = true;
+// Typed as boolean (not a literal) so TypeScript keeps both branches live.
+export const DEMO_MODE: boolean = true;
