@@ -9,6 +9,7 @@ import { useAuth } from "@/components/auth-provider";
 import { useLanguages } from "@/hooks/use-lexion-data";
 import { profileService } from "@/services/profileService";
 import { friendlyError } from "@/services/firestore-helpers";
+import { DEMO_MODE } from "@/lib/demo";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/profile")({
@@ -50,7 +51,8 @@ function ProfilePage() {
   const profileQuery = useQuery({
     queryKey: ["profile", uid],
     enabled: Boolean(uid),
-    queryFn: () => profileService.get(uid!),
+    // DEMO_MODE: resolve to null — no Firestore read.
+    queryFn: () => (DEMO_MODE ? null : profileService.get(uid!)),
   });
 
   const [depth, setDepth] = useState("balanced");
@@ -71,6 +73,10 @@ function ProfilePage() {
 
   const save = async (patch: Record<string, unknown>) => {
     if (!uid) return;
+    if (DEMO_MODE) {
+      toast("Demo mode is on — changes aren't saved.");
+      return;
+    }
     try {
       await profileService.update(uid, patch);
       await queryClient.invalidateQueries({ queryKey: ["profile", uid] });

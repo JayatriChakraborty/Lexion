@@ -5,6 +5,7 @@ import { Logo } from "@/components/app-shell";
 import { AuthLoading, useAuth } from "@/components/auth-provider";
 import { authService } from "@/services/authService";
 import { friendlyError } from "@/services/firestore-helpers";
+import { DEMO_MODE } from "@/lib/demo";
 import { APP_NAME } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/login")({
@@ -29,6 +30,10 @@ export function GoogleButton({ label, onDone }: { label: string; onDone: () => v
       type="button"
       disabled={busy}
       onClick={async () => {
+        if (DEMO_MODE) {
+          onDone();
+          return;
+        }
         setBusy(true);
         try {
           await authService.signInWithGoogle();
@@ -74,13 +79,19 @@ function LoginPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (status === "authenticated") void navigate({ to: "/dashboard", replace: true });
+    if (!DEMO_MODE && status === "authenticated") void navigate({ to: "/dashboard", replace: true });
   }, [status, navigate]);
 
-  if (status === "loading" || status === "authenticated") return <AuthLoading label="Checking your session…" />;
+  if (!DEMO_MODE && (status === "loading" || status === "authenticated"))
+    return <AuthLoading label="Checking your session…" />;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (DEMO_MODE) {
+      // DEMO_MODE: ignore any entered values, no Firebase Auth request.
+      void navigate({ to: "/dashboard", replace: true });
+      return;
+    }
     setBusy(true);
     try {
       await authService.signInWithEmail(email.trim(), password);
@@ -99,7 +110,7 @@ function LoginPage() {
           <label htmlFor="email" className="text-sm font-medium text-foreground">
             Email
           </label>
-          <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={fieldClass} />
+          <input id="email" type="email" required={!DEMO_MODE} value={email} onChange={(e) => setEmail(e.target.value)} className={fieldClass} />
         </div>
         <div>
           <label htmlFor="password" className="text-sm font-medium text-foreground">
@@ -108,7 +119,7 @@ function LoginPage() {
           <input
             id="password"
             type="password"
-            required
+            required={!DEMO_MODE}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className={fieldClass}
