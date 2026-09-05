@@ -5,6 +5,7 @@ import { AuthLoading, useAuth } from "@/components/auth-provider";
 import { AuthShell, GoogleButton, fieldClass } from "./login";
 import { authService } from "@/services/authService";
 import { friendlyError } from "@/services/firestore-helpers";
+import { DEMO_MODE } from "@/lib/demo";
 import { APP_NAME } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/signup")({
@@ -31,13 +32,19 @@ function SignupPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (status === "authenticated") void navigate({ to: "/dashboard", replace: true });
+    if (!DEMO_MODE && status === "authenticated") void navigate({ to: "/dashboard", replace: true });
   }, [status, navigate]);
 
-  if (status === "loading" || status === "authenticated") return <AuthLoading label="Checking your session…" />;
+  if (!DEMO_MODE && (status === "loading" || status === "authenticated"))
+    return <AuthLoading label="Checking your session…" />;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (DEMO_MODE) {
+      // DEMO_MODE: ignore any entered values, no Firebase Auth request, no profile write.
+      void navigate({ to: "/dashboard", replace: true });
+      return;
+    }
     setBusy(true);
     try {
       await authService.signUpWithEmail(email.trim(), password, name.trim());
