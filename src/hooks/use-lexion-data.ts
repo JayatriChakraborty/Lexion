@@ -10,89 +10,88 @@ import {
   submissionService,
   vocabularyService,
 } from "@/services";
+import type { AnalysisBundle } from "@/services/analysisService";
+import type { LanguageRecord } from "@/services/languageService";
+import type { MistakeRecord } from "@/services/mistakeService";
+import type { ProgressRecord } from "@/services/progressService";
+import type { StudyNoteRecord } from "@/services/studyNoteService";
+import type { SubmissionRecord } from "@/services/submissionService";
+import type { VocabularyRecord } from "@/services/vocabularyService";
 
 function useUid() {
   const { uid, status } = useAuth();
-  // DEMO_MODE: never read Firestore — queries resolve to empty data instead.
-  return { uid, enabled: !DEMO_MODE && status === "authenticated" && Boolean(uid) };
+  return { uid, enabled: status === "authenticated" && Boolean(uid) };
 }
 
 export function useSubmissions() {
   const { uid, enabled } = useUid();
-  return useQuery({
+  return useQuery<SubmissionRecord[]>({
     queryKey: ["submissions", uid],
     enabled,
-    placeholderData: DEMO_MODE ? [] : undefined,
-    queryFn: () => submissionService.list(uid!),
+    // DEMO_MODE: resolve to empty data — no Firestore read.
+    queryFn: () => (DEMO_MODE ? [] : submissionService.list(uid!)),
   });
 }
 
 export function useSubmission(id: string) {
   const { enabled } = useUid();
-  return useQuery({
+  return useQuery<SubmissionRecord | null>({
     queryKey: ["submission", id],
     enabled: enabled && Boolean(id),
-    placeholderData: DEMO_MODE ? null : undefined,
-    queryFn: () => submissionService.get(id),
+    queryFn: () => (DEMO_MODE ? null : submissionService.get(id)),
   });
 }
 
 export function useAnalysisForSubmission(submissionId: string) {
   const { enabled } = useUid();
-  return useQuery({
+  return useQuery<AnalysisBundle | null>({
     queryKey: ["analysis", submissionId],
     enabled: enabled && Boolean(submissionId),
-    placeholderData: DEMO_MODE ? null : undefined,
-    queryFn: () => analysisService.forSubmission(submissionId),
+    queryFn: () => (DEMO_MODE ? null : analysisService.forSubmission(submissionId)),
   });
 }
 
 export function useLanguages() {
   const { uid, enabled } = useUid();
-  return useQuery({
+  return useQuery<LanguageRecord[]>({
     queryKey: ["languages", uid],
     enabled,
-    placeholderData: DEMO_MODE ? [] : undefined,
-    queryFn: () => languageService.list(uid!),
+    queryFn: () => (DEMO_MODE ? [] : languageService.list(uid!)),
   });
 }
 
 export function useMistakes() {
   const { uid, enabled } = useUid();
-  return useQuery({
+  return useQuery<MistakeRecord[]>({
     queryKey: ["mistakes", uid],
     enabled,
-    placeholderData: DEMO_MODE ? [] : undefined,
-    queryFn: () => mistakeService.list(uid!),
+    queryFn: () => (DEMO_MODE ? [] : mistakeService.list(uid!)),
   });
 }
 
 export function useStudyNotes() {
   const { uid, enabled } = useUid();
-  return useQuery({
+  return useQuery<StudyNoteRecord[]>({
     queryKey: ["study_notes", uid],
     enabled,
-    placeholderData: DEMO_MODE ? [] : undefined,
-    queryFn: () => studyNoteService.list(uid!),
+    queryFn: () => (DEMO_MODE ? [] : studyNoteService.list(uid!)),
   });
 }
 
 export function useProgress() {
   const { uid, enabled } = useUid();
-  return useQuery({
+  return useQuery<ProgressRecord[]>({
     queryKey: ["progress", uid],
     enabled,
-    placeholderData: DEMO_MODE ? [] : undefined,
-    queryFn: () => progressService.list(uid!),
+    queryFn: () => (DEMO_MODE ? [] : progressService.list(uid!)),
   });
 }
 
 export function useVocabulary() {
   const { uid, enabled } = useUid();
-  return useQuery({
+  return useQuery<VocabularyRecord[]>({
     queryKey: ["vocabulary", uid],
     enabled,
-    placeholderData: DEMO_MODE ? [] : undefined,
-    queryFn: () => vocabularyService.list(uid!),
+    queryFn: () => (DEMO_MODE ? [] : vocabularyService.list(uid!)),
   });
 }
