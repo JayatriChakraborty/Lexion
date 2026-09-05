@@ -72,7 +72,7 @@ function SignupPage() {
           <label htmlFor="email" className="text-sm font-medium text-foreground">
             Email
           </label>
-          <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={fieldClass} />
+          <input id="email" type="email" required={!DEMO_MODE} value={email} onChange={(e) => setEmail(e.target.value)} className={fieldClass} />
         </div>
         <div>
           <label htmlFor="password" className="text-sm font-medium text-foreground">
@@ -81,7 +81,7 @@ function SignupPage() {
           <input
             id="password"
             type="password"
-            required
+            required={!DEMO_MODE}
             minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
