@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import type { User } from "firebase/auth";
 import { authService } from "@/services/authService";
 import { profileService, type Profile } from "@/services/profileService";
+import { DEMO_MODE } from "@/lib/demo";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
@@ -29,11 +30,15 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [status, setStatus] = useState<AuthStatus>("loading");
+  // DEMO_MODE: never touch Firebase Auth — report a synthetic signed-in state.
+  const [status, setStatus] = useState<AuthStatus>(DEMO_MODE ? "authenticated" : "loading");
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(
+    DEMO_MODE ? { display_name: "Demo Learner", avatar_url: "", native_language: "English" } : null,
+  );
 
   useEffect(() => {
+    if (DEMO_MODE) return;
     const unsubscribe = authService.observe(async (next) => {
       setUser(next);
       setStatus(next ? "authenticated" : "unauthenticated");
@@ -54,13 +59,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       status,
       user,
-      uid: user?.uid ?? null,
+      uid: DEMO_MODE ? "demo-user" : (user?.uid ?? null),
       profile,
       signOut: async () => {
+        if (DEMO_MODE) return;
         await authService.signOut();
       },
       refreshProfile: async () => {
-        if (user) setProfile(await profileService.get(user.uid));
+        if (DEMO_MODE || !user) return;
+        setProfile(await profileService.get(user.uid));
       },
     }),
     [status, user, profile],
