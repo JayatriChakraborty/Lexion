@@ -31,7 +31,7 @@ function Section({
   children,
 }: {
   title: string;
-  subtitle?: string;
+  subtitle?: string | undefined;
   defaultOpen?: boolean;
   children: ReactNode;
 }) {
@@ -214,8 +214,8 @@ export function LiveResult({
   retranslating,
 }: {
   data: LexionAnalysis;
-  imageUrl?: string;
-  audioUrl?: string;
+  imageUrl?: string | undefined;
+  audioUrl?: string | undefined;
   onRetranslate: (target: string) => void;
   retranslating: boolean;
 }) {

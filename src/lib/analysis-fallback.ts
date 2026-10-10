@@ -42,7 +42,7 @@ export function fallbackAnalysis(input: {
   sourceLanguage: string;
   targetLanguage: string;
   inputType: InputType;
-  context?: string;
+  context?: string | undefined;
 }): LexionAnalysis {
   const { text, sourceLanguage, targetLanguage, inputType } = input;
   const wordCount = words(text).length;

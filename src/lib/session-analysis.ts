@@ -7,8 +7,8 @@ import type { LexionAnalysis } from "./lexion-schema";
 
 export type SessionAnalysis = {
   analysis: LexionAnalysis;
-  imageUrl?: string;
-  audioUrl?: string;
+  imageUrl?: string | undefined;
+  audioUrl?: string | undefined;
   createdAt: number;
 };
 

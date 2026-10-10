@@ -24,7 +24,7 @@ const STAGES = {
 } as const;
 
 /** Staged loader. Steps advance on a timer but never past the last one until `done`. */
-export function AnalysisLoading({ mode, title }: { mode: keyof typeof STAGES; title?: string }) {
+export function AnalysisLoading({ mode, title }: { mode: keyof typeof STAGES; title?: string | undefined }) {
   const stage = STAGES[mode];
   const [step, setStep] = useState(0);
   useEffect(() => {
