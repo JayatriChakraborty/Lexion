@@ -96,7 +96,7 @@ export type LexionAnalysis = {
   source_language: string;
   target_language: string;
   input_type: InputType;
-  context?: string;
+  context?: string | undefined;
   estimated_cefr: string;
   overall_score: number;
   summary: string;
