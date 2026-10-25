@@ -7,8 +7,8 @@ import { languageName } from "./languages";
 
 /**
  * The single analysis provider boundary.
- * GEMINI_API_KEY present → real Gemini analysis.
- * GEMINI_API_KEY absent  → temporary development fallback (clearly flagged).
+ * GROQ_API_KEY present → real Groq analysis.
+ * GROQ_API_KEY absent  → temporary development fallback (clearly flagged).
  */
 
 const MAX_TEXT = 6000;
@@ -50,6 +50,9 @@ Schema:
 "mixed_language":[{"inserted_language":string,"excerpt":string,"explanation":string,"alternative":string}],
 "audio_analysis":{"filler_words":[string],"excessive_fillers":boolean,"repetitions":[string],"fluency":string,"clarity":string,"enunciation":string,"pronunciation_feedback":[{"word":string,"note":string}]} (audio only)}`;
 
+function rateLimited(e: unknown) {
+  return e instanceof Error && e.message === "PROVIDER_429";
+}
 function arr<T>(v: unknown): T[] {
   return Array.isArray(v) ? (v as T[]) : [];
 }
@@ -61,7 +64,10 @@ function clamp(n: unknown, d: number) {
   return Math.max(0, Math.min(100, Math.round(x)));
 }
 
-function normalise(raw: Record<string, unknown>, input: z.infer<typeof AnalyseInput>): LexionAnalysis {
+function normalise(
+  raw: Record<string, unknown>,
+  input: z.infer<typeof AnalyseInput>,
+): LexionAnalysis {
   const nat = (raw["naturalness"] ?? {}) as Record<string, unknown>;
   const reg = (raw["register"] ?? {}) as Record<string, unknown>;
   const tr = (raw["translation"] ?? {}) as Record<string, unknown>;
@@ -124,8 +130,8 @@ function normalise(raw: Record<string, unknown>, input: z.infer<typeof AnalyseIn
 export const analyseSubmission = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => AnalyseInput.parse(d))
   .handler(async ({ data }): Promise<AnalyseResponse> => {
-    const { geminiConfigured, generateJson } = await import("./gemini.server");
-    if (!geminiConfigured()) {
+    const { groqConfigured, generateJson } = await import("./groq.server");
+    if (!groqConfigured()) {
       const fb = fallbackAnalysis(data);
       if (data.inputType === "image" && fb.image_analysis) {
         fb.image_analysis.ocr_confidence = data.ocrConfidence ?? "low";
@@ -144,16 +150,15 @@ export const analyseSubmission = createServerFn({ method: "POST" })
       ]
         .filter(Boolean)
         .join("\n");
-      const raw = await generateJson<Record<string, unknown>>({
-        system: ANALYSIS_SYSTEM,
-        parts: [{ text: prompt }],
-      });
+      const raw = await generateJson<Record<string, unknown>>({ system: ANALYSIS_SYSTEM, prompt });
       return { ok: true, analysis: normalise(raw, data) };
     } catch (e) {
       console.error("analyseSubmission failed", e);
       return {
         ok: false,
-        error: "Lexion couldn't finish this analysis right now. Your text is safe — please try again in a moment.",
+        error: rateLimited(e)
+          ? "Lexion is getting a lot of requests right now. Your text is safe — please wait a minute and try again."
+          : "Lexion couldn't finish this analysis right now. Your text is safe — please try again in a moment.",
       };
     }
   });
@@ -174,28 +179,36 @@ export type ExtractResponse =
 export const extractImageText = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => MediaInput.parse(d))
   .handler(async ({ data }): Promise<ExtractResponse> => {
-    if (!data.mimeType.startsWith("image/")) return { ok: false, error: "That file isn't an image Lexion can read." };
-    const { geminiConfigured, generateJson } = await import("./gemini.server");
-    if (!geminiConfigured()) {
+    if (!data.mimeType.startsWith("image/"))
+      return { ok: false, error: "That file isn't an image Lexion can read." };
+    const { groqConfigured, generateJson } = await import("./groq.server");
+    if (!groqConfigured()) {
       return {
         ok: true,
         fallback: true,
         confidence: "low",
-        notes: "Sample text — real text recognition starts once the AI key is configured. Replace it with the text in your image.",
+        notes:
+          "Sample text — real text recognition starts once the AI key is configured. Replace it with the text in your image.",
         text: "Hier, je suis allé au marché avec ma sœur. Nous avons acheté des pommes et du pain frais.",
       };
     }
     try {
-      const raw = await generateJson<{ text?: string; confidence?: string; notes?: string; readable?: boolean }>({
+      const raw = await generateJson<{
+        text?: string;
+        confidence?: string;
+        notes?: string;
+        readable?: boolean;
+      }>({
         system: `You transcribe text from images exactly as written, including handwriting. Do not correct mistakes — the learner's errors must be preserved. Mark any unreadable word as [unclear]. Never invent words. Return JSON: {"readable":boolean,"text":string,"confidence":"high|medium|low","notes":string}`,
-        parts: [
-          { text: `Expected language: ${languageName(data.sourceLanguage)}.` },
-          { inlineData: { mimeType: data.mimeType, data: data.base64 } },
-        ],
+        prompt: `Expected language: ${languageName(data.sourceLanguage)}.`,
+        image: { mimeType: data.mimeType, data: data.base64 },
       });
       const text = str(raw.text).trim();
       if (raw.readable === false || !text) {
-        return { ok: false, error: "Lexion couldn't find readable text in this image. Try a sharper, well-lit photo." };
+        return {
+          ok: false,
+          error: "Lexion couldn't find readable text in this image. Try a sharper, well-lit photo.",
+        };
       }
       const c = raw.confidence === "high" || raw.confidence === "medium" ? raw.confidence : "low";
       return { ok: true, fallback: false, text, confidence: c, notes: str(raw.notes) };
@@ -208,8 +221,7 @@ export const extractImageText = createServerFn({ method: "POST" })
 /* ---------------------------- Audio → text ---------------------------- */
 
 export type TranscribeResponse =
-  | { ok: true; text: string; notes: string; fallback: boolean }
-  | { ok: false; error: string };
+  { ok: true; text: string; notes: string; fallback: boolean } | { ok: false; error: string };
 
 export const transcribeAudio = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => MediaInput.parse(d))
@@ -217,32 +229,35 @@ export const transcribeAudio = createServerFn({ method: "POST" })
     if (!data.mimeType.startsWith("audio/") && !data.mimeType.startsWith("video/webm")) {
       return { ok: false, error: "That file isn't an audio format Lexion supports." };
     }
-    const { geminiConfigured, generateJson } = await import("./gemini.server");
-    if (!geminiConfigured()) {
+    const { groqConfigured, transcribe } = await import("./groq.server");
+    if (!groqConfigured()) {
       return {
         ok: true,
         fallback: true,
-        notes: "Sample transcription — real transcription starts once the AI key is configured. You can edit it before analysing.",
+        notes:
+          "Sample transcription — real transcription starts once the AI key is configured. You can edit it before analysing.",
         text: "Euh, alors, je voudrais parler de mon expérience à l'université. Au début c'était, c'était difficile mais maintenant je suis très content de être ici.",
       };
     }
     try {
-      const raw = await generateJson<{ speech?: boolean; text?: string; notes?: string }>({
-        system: `You transcribe speech verbatim, keeping fillers, hesitations, repetitions and learner errors exactly as spoken. Mark unintelligible stretches as [inaudible]. Never invent words. Return JSON: {"speech":boolean,"text":string,"notes":string}`,
-        parts: [
-          {
-            text: `Expected language: ${languageName(data.sourceLanguage)}.${data.context ? ` Topic: ${data.context}` : ""}`,
-          },
-          { inlineData: { mimeType: data.mimeType.split(";")[0] ?? data.mimeType, data: data.base64 } },
-        ],
+      const text = await transcribe({
+        audio: { mimeType: data.mimeType.split(";")[0] ?? data.mimeType, data: data.base64 },
+        language: data.sourceLanguage,
+        // Whisper drops fillers unless the prompt shows them; keeping them matters for fluency feedback.
+        prompt: `Umm, so, uh, I mean, like... ${data.context ?? ""}`.trim(),
       });
-      const text = str(raw.text).trim();
-      if (raw.speech === false || !text) {
-        return { ok: false, error: "Lexion couldn't hear any understandable speech in this recording." };
+      if (!text) {
+        return {
+          ok: false,
+          error: "Lexion couldn't hear any understandable speech in this recording.",
+        };
       }
-      return { ok: true, fallback: false, text, notes: str(raw.notes) };
+      return { ok: true, fallback: false, text, notes: "" };
     } catch (e) {
       console.error("transcribeAudio failed", e);
-      return { ok: false, error: "Lexion couldn't transcribe this recording right now. Please try again." };
+      return {
+        ok: false,
+        error: "Lexion couldn't transcribe this recording right now. Please try again.",
+      };
     }
   });
