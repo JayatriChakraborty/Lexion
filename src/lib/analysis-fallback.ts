@@ -1,7 +1,7 @@
 /**
  * TEMPORARY DEVELOPMENT FALLBACK.
  *
- * Used only when no GEMINI_API_KEY is configured (or the provider fails), so the
+ * Used only when no GROQ_API_KEY is configured (or the provider fails), so the
  * whole analysis UI can be exercised. It contains no linguistic rule engine — it
  * produces a realistic, clearly-labelled sample result shaped exactly like a real
  * Gemini analysis. Delete this file once the key is permanently configured.
